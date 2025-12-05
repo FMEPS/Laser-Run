@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Laser Run EPS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        body::before {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #667eea 0%, transparent 70%);
+            top: -300px;
+            left: -300px;
+        }
+
+        body::after {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #764ba2 0%, transparent 70%);
+            bottom: -250px;
+            right: -250px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, 50px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.5s ease;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Buttons */
+        button {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-violet {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .btn-orange {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        /* Input fields */
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* DUO Configuration */
+        .duo-config {
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .duo-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .duo-header input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .duo-header button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .duo-times {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .time-field label {
+            display: block;
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .time-field input {
+            margin-bottom: 0;
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        /* Students Grid */
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .student-btn {
+            padding: 20px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: #1f2937;
+            transition: all 0.3s ease;
+        }
+
+        .student-btn.selected {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Clock */
+        .clock {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: #667eea;
+            z-index: 100;
+        }
+
+        /* Timers Grid */
+        .timers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .timer-row {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border: 3px solid #667eea;
+        }
+
+        .compact-timer-btn {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            font-family: 'Outfit', sans-serif;
+            flex: 0 0 auto;
+            min-width: 140px;
+        }
+
+        .compact-timer-btn:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(0);
+        }
+
+        .timer-btn-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .students-names {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            line-height: 1.3;
+        }
+
+        .stage-info {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .timer-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .live-timer-display {
+            flex: 1;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 12px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #dee2e6;
+        }
+
+        .live-timer-label {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .live-timer-time {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #667eea;
+            letter-spacing: 2px;
+        }
+
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: scaleIn 0.3s ease;
+        }
+
+        .modal-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .modal-message {
+            font-size: 1.1rem;
+            color: #4b5563;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-actions button {
+            flex: 1;
+        }
+
+        /* Results Table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .time-valid {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .time-invalid {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .no-timers {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            font-size: 1.2rem;
+        }
+
+        .detail-box {
+            background: #f3f4f6;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .detail-box.highlight {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+            border: 2px solid #8b5cf6;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .detail-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            color: #1f2937;
+        }
+
+        .total-time-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #667eea;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .clock {
+                position: static;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+            .students-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .timers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-row {
+                flex-direction: column;
+            }
+
+            .compact-timer-btn {
+                padding: 10px 15px;
+                min-width: unset;
+                width: 100%;
+            }
+
+            .students-names {
+                font-size: 0.95rem;
+            }
+
+            .stage-info {
+                font-size: 0.8rem;
+            }
+
+            .timer-display {
+                font-size: 1.4rem;
+            }
+
+            .live-timer-time {
+                font-size: 2rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .actions button {
+                width: 100%;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .results-table {
+                font-size: 0.85rem;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 8px;
+            }
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ LASER RUN EPS</h1>
+
+        <!-- PAGE 1: CONFIGURATION -->
+        <div id="configPage" class="page active">
+            <div class="card">
+                <h2>⚙️ Configuration</h2>
+                
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #4b5563;">
+                    Liste des élèves (un par ligne, max 50) :
+                </label>
+                <textarea id="studentsInput" placeholder="Prénom Nom&#10;Prénom Nom&#10;..."></textarea>
+
+                <h2 style="margin-top: 30px;">🎯 Configuration des DUO</h2>
+                <div id="duoConfigsContainer"></div>
+                
+                <button class="btn-violet" onclick="addDuoConfig()">➕ Ajouter un DUO</button>
+
+                <div class="actions">
+                    <button class="btn-violet" onclick="document.getElementById('excelImport').click()">
+                        📥 Importer depuis Excel
+                    </button>
+                    <input type="file" id="excelImport" accept=".xls,.xlsx" onchange="importFromExcel(event)">
+                    
+                    <button class="btn-red" onclick="showResetModal()">🔄 Réinitialiser</button>
+                    <button class="btn-blue" onclick="startSession()">▶️ Démarrer la Séance</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: SELECTION DES ELEVES -->
+        <div id="selectStudentsPage" class="page">
+            <div id="clockDisplay" class="clock">00:00:00</div>
+            
+            <div class="card">
+                <div class="actions">
+                    <button class="btn-blue" onclick="showPage('configPage')">⚙️ Configuration</button>
+                    <button class="btn-red" onclick="showEndSessionModal()">⏹ Fin de la Séance</button>
+                </div>
+
+                <h2 style="margin-top: 20px;">👥 Sélectionner 2 élèves</h2>
+                <div id="studentsGrid" class="students-grid"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: SELECTION DU DUO -->
+        <div id="selectDuoPage" class="page">
+            <div class="card">
+                <button class="btn-blue" onclick="showPage('selectStudentsPage')">← Retour à la sélection des élèves</button>
+                
+                <h2 id="duoPageTitle" style="margin-top: 20px;">⚡ Sélectionner un DUO</h2>
+                <div id="duoSelectGrid" class="students-grid"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 4: BINOMES EN COURS -->
+        <div id="mainPage" class="page">
+            <div class="card">
+                <div class="actions">
+                    <button class="btn-blue" onclick="showPage('selectStudentsPage')">➕ Définir un autre duo</button>
+                    <button class="btn-red" onclick="showEndSessionModal()">⏹ Fin de la Séance</button>
+                </div>
+
+                <h2 style="margin-top: 20px;">🏃 Binômes en cours</h2>
+                <div id="timersContainer"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 5: RESULTATS -->
+        <div id="resultsPage" class="page">
+            <div class="card">
+                <div class="actions">
+                    <button class="btn-blue" onclick="showPage('mainPage')">← Retour</button>
+                    <button class="btn-blue" onclick="showPage('configPage')">⚙️ Configuration</button>
+                    <button class="btn-green" onclick="exportToExcel()">📥 Exporter en Excel</button>
+                </div>
+
+                <h2 style="margin-top: 20px;">📊 Résultats Finaux</h2>
+                <div id="resultsTableContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay"></div>
+
+    <script>
+        // État de l'application
+        let appState = {
+            students: [],
+            duoConfigs: [],
+            runningTimers: [],
+            finishedTimers: [],
+            selectedStudents: []
+        };
+
+        let isRecording = false;
+
+        // Stages names
+        const stageNames = ['Course 1', 'Tir 1', 'Course 2', 'Tir 2', 'Course 3', 'Tir 3'];
+
+        // Initialize
+        window.onload = function() {
+            loadFromLocalStorage();
+            renderDuoConfigs();
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Protection against closing
+            window.addEventListener('beforeunload', function(e) {
+                if (appState.runningTimers.length > 0) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        };
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const clockEl = document.getElementById('clockDisplay');
+            if (clockEl) {
+                clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // Page navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            if (pageId === 'mainPage') {
+                renderTimers();
+            } else if (pageId === 'selectStudentsPage') {
+                appState.selectedStudents = [];
+                renderStudentsGrid();
+            } else if (pageId === 'resultsPage') {
+                renderResults();
+            }
+        }
+
+        // Format time
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // Parse time string to seconds
+        function parseTime(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            if (parts.length !== 3) return 0;
+            const h = parseInt(parts[0]) || 0;
+            const m = parseInt(parts[1]) || 0;
+            const s = parseInt(parts[2]) || 0;
+            return h * 3600 + m * 60 + s;
+        }
+
+        // DUO Configuration
+        function addDuoConfig() {
+            const newDuo = {
+                id: Date.now(),
+                name: `DUO ${appState.duoConfigs.length + 1}`,
+                times: {
+                    course1: '00:00:00',
+                    tir1: '00:00:00',
+                    course2: '00:00:00',
+                    tir2: '00:00:00',
+                    course3: '00:00:00',
+                    tir3: '00:00:00',
+                    maxTotal: '00:00:00'
+                }
+            };
+            appState.duoConfigs.push(newDuo);
+            saveToLocalStorage();
+            renderDuoConfigs();
+        }
+
+        function removeDuoConfig(index) {
+            appState.duoConfigs.splice(index, 1);
+            saveToLocalStorage();
+            renderDuoConfigs();
+        }
+
+        function updateDuoName(index, name) {
+            appState.duoConfigs[index].name = name;
+            saveToLocalStorage();
+        }
+
+        function updateDuoTime(index, field, value) {
+            appState.duoConfigs[index].times[field] = value;
+            saveToLocalStorage();
+        }
+
+        function renderDuoConfigs() {
+            const container = document.getElementById('duoConfigsContainer');
+            container.innerHTML = '';
+            
+            appState.duoConfigs.forEach((duo, index) => {
+                const duoDiv = document.createElement('div');
+                duoDiv.className = 'duo-config';
+                duoDiv.innerHTML = `
+                    <div class="duo-header">
+                        <input type="text" value="${duo.name}" 
+                               onchange="updateDuoName(${index}, this.value)"
+                               placeholder="Nom du DUO">
+                        <button class="btn-red" onclick="removeDuoConfig(${index})">🗑 Supprimer</button>
+                    </div>
+                    <div class="duo-times">
+                        <div class="time-field">
+                            <label>Coureur 1 - Course</label>
+                            <input type="text" value="${duo.times.course1}" 
+                                   onchange="updateDuoTime(${index}, 'course1', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                        <div class="time-field">
+                            <label>Coureur 1 - Tir</label>
+                            <input type="text" value="${duo.times.tir1}" 
+                                   onchange="updateDuoTime(${index}, 'tir1', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                        <div class="time-field">
+                            <label>Coureur 2 - Course</label>
+                            <input type="text" value="${duo.times.course2}" 
+                                   onchange="updateDuoTime(${index}, 'course2', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                        <div class="time-field">
+                            <label>Coureur 2 - Tir</label>
+                            <input type="text" value="${duo.times.tir2}" 
+                                   onchange="updateDuoTime(${index}, 'tir2', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                        <div class="time-field">
+                            <label>Course à 2</label>
+                            <input type="text" value="${duo.times.course3}" 
+                                   onchange="updateDuoTime(${index}, 'course3', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                        <div class="time-field">
+                            <label>Tir à 2</label>
+                            <input type="text" value="${duo.times.tir3}" 
+                                   onchange="updateDuoTime(${index}, 'tir3', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                        <div class="time-field">
+                            <label>Temps Maximum total</label>
+                            <input type="text" value="${duo.times.maxTotal}" 
+                                   onchange="updateDuoTime(${index}, 'maxTotal', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(duoDiv);
+            });
+        }
+
+        // Start session
+        function startSession() {
+            // Get students
+            const studentsText = document.getElementById('studentsInput').value.trim();
+            if (!studentsText) {
+                alert('Veuillez saisir au moins un élève.');
+                return;
+            }
+            
+            appState.students = studentsText.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0)
+                .slice(0, 50);
+            
+            if (appState.students.length === 0) {
+                alert('Veuillez saisir au moins un élève valide.');
+                return;
+            }
+
+            // Reset running timers
+            appState.runningTimers.forEach(timer => {
+                if (timer.interval) {
+                    clearInterval(timer.interval);
+                }
+            });
+            appState.runningTimers = [];
+            appState.finishedTimers = [];
+            
+            saveToLocalStorage();
+            showPage('selectStudentsPage');
+        }
+
+        // Students selection
+        function renderStudentsGrid() {
+            const grid = document.getElementById('studentsGrid');
+            grid.innerHTML = '';
+            
+            appState.students.forEach(student => {
+                const btn = document.createElement('button');
+                btn.className = 'student-btn';
+                btn.textContent = student;
+                
+                if (appState.selectedStudents.includes(student)) {
+                    btn.classList.add('selected');
+                }
+                
+                btn.onclick = () => toggleStudentSelection(student);
+                grid.appendChild(btn);
+            });
+        }
+
+        function toggleStudentSelection(student) {
+            const index = appState.selectedStudents.indexOf(student);
+            
+            if (index > -1) {
+                appState.selectedStudents.splice(index, 1);
+            } else {
+                if (appState.selectedStudents.length >= 2) {
+                    return;
+                }
+                appState.selectedStudents.push(student);
+            }
+            
+            renderStudentsGrid();
+            
+            if (appState.selectedStudents.length === 2) {
+                const title = `${appState.selectedStudents[0]} + ${appState.selectedStudents[1]}`;
+                showModal(
+                    title,
+                    'Êtes-vous sûr ?',
+                    () => {
+                        showDuoSelection();
+                    },
+                    () => {
+                        appState.selectedStudents = [];
+                        renderStudentsGrid();
+                    },
+                    'Confirmer'
+                );
+            }
+        }
+
+        // DUO selection
+        function showDuoSelection() {
+            if (appState.duoConfigs.length === 0) {
+                alert('Veuillez configurer au moins un DUO.');
+                appState.selectedStudents = [];
+                showPage('configPage');
+                return;
+            }
+            
+            document.getElementById('duoPageTitle').textContent = 
+                `⚡ ${appState.selectedStudents[0]} + ${appState.selectedStudents[1]}`;
+            
+            const grid = document.getElementById('duoSelectGrid');
+            grid.innerHTML = '';
+            
+            appState.duoConfigs.forEach((duo, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'student-btn btn-violet';
+                btn.textContent = duo.name;
+                btn.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+                btn.style.color = 'white';
+                
+                btn.onclick = () => {
+                    showModal(
+                        duo.name,
+                        'Êtes-vous sûr ? PRÊT',
+                        () => {
+                            startTimer(duo);
+                        },
+                        null,
+                        'Confirmer'
+                    );
+                };
+                
+                grid.appendChild(btn);
+            });
+            
+            showPage('selectDuoPage');
+        }
+
+        // Timer functions
+        function startTimer(duo) {
+            const timer = {
+                id: Date.now(),
+                students: [...appState.selectedStudents],
+                duoName: duo.name,
+                duoConfig: {...duo},
+                startTime: Date.now(),
+                currentStage: 0,
+                stageStartTime: Date.now(),
+                stageTimes: [],
+                totalTime: 0,
+                finished: false,
+                interval: null
+            };
+            
+            timer.interval = setInterval(() => updateTimerDisplay(timer), 100);
+            
+            appState.runningTimers.push(timer);
+            appState.selectedStudents = [];
+            
+            saveToLocalStorage();
+            showPage('mainPage');
+            renderTimers();
+        }
+
+        function updateTimerDisplay(timer) {
+            if (timer.finished) return;
+            
+            timer.totalTime = Math.floor((Date.now() - timer.startTime) / 1000);
+            saveToLocalStorage();
+            
+            // Update live timer display
+            updateLiveTimerDisplay(timer);
+        }
+
+        function updateLiveTimerDisplay(timer) {
+            const liveTimerEl = document.getElementById(`liveTimer${timer.id}`);
+            if (liveTimerEl && !timer.finished) {
+                const currentTotalTime = Math.floor((Date.now() - timer.startTime) / 1000);
+                liveTimerEl.textContent = formatTime(currentTotalTime);
+            }
+        }
+
+        function renderTimers() {
+            const container = document.getElementById('timersContainer');
+            
+            const activeTimers = appState.runningTimers.filter(t => !t.finished);
+            const finishedTimers = appState.runningTimers.filter(t => t.finished);
+            
+            if (activeTimers.length === 0 && finishedTimers.length === 0) {
+                container.innerHTML = '<div class="no-timers">Aucun binôme en cours</div>';
+                return;
+            }
+            
+            let html = '<div class="timers-grid">';
+            
+            activeTimers.forEach((timer) => {
+                const index = appState.runningTimers.indexOf(timer);
+                const stageName = stageNames[timer.currentStage];
+                
+                html += `
+                    <div class="timer-row">
+                        <button class="compact-timer-btn btn-orange" onclick="recordStage(${index})">
+                            <div class="timer-btn-content">
+                                <div class="students-names">${timer.students[0]} + ${timer.students[1]}</div>
+                                <div class="stage-info">${stageName}</div>
+                            </div>
+                            <div class="timer-display">▶</div>
+                        </button>
+                        <div class="live-timer-display">
+                            <div class="live-timer-label">${timer.students[0]} + ${timer.students[1]}</div>
+                            <div class="live-timer-time" id="liveTimer${timer.id}">00:00:00</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            if (finishedTimers.length > 0) {
+                html += '<div class="section-title">✅ Binômes terminés</div>';
+                html += '<div class="timers-grid">';
+                
+                finishedTimers.forEach((timer) => {
+                    const index = appState.runningTimers.indexOf(timer);
+                    
+                    html += `
+                        <div class="timer-row">
+                            <button class="compact-timer-btn btn-green" onclick="showTimerDetails(${index})" style="flex: 1;">
+                                <div class="timer-btn-content">
+                                    <div class="students-names">${timer.students[0]} + ${timer.students[1]}</div>
+                                    <div class="stage-info">TERMINÉ ✓</div>
+                                </div>
+                                <div class="timer-display">${formatTime(timer.totalTime)}</div>
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+            
+            // Update live timers
+            activeTimers.forEach(timer => {
+                updateLiveTimerDisplay(timer);
+            });
+        }
+
+        function recordStage(timerIndex) {
+            if (isRecording) return;
+            isRecording = true;
+            
+            const timer = appState.runningTimers[timerIndex];
+            if (!timer || timer.finished) {
+                isRecording = false;
+                return;
+            }
+            
+            // Record current stage time
+            const stageTime = Date.now() - timer.stageStartTime;
+            timer.stageTimes.push(stageTime);
+            
+            // Move to next stage
+            timer.currentStage++;
+            
+            if (timer.currentStage >= 6) {
+                // Finished
+                timer.finished = true;
+                timer.totalTime = Math.floor((Date.now() - timer.startTime) / 1000);
+                if (timer.interval) {
+                    clearInterval(timer.interval);
+                    timer.interval = null;
+                }
+            } else {
+                // Start next stage
+                timer.stageStartTime = Date.now();
+            }
+            
+            saveToLocalStorage();
+            renderTimers();
+            
+            setTimeout(() => {
+                isRecording = false;
+            }, 300);
+        }
+
+        function showTimerDetails(timerIndex) {
+            const timer = appState.runningTimers[timerIndex];
+            if (!timer) return;
+            
+            let content = `
+                <div class="total-time-display">${formatTime(timer.totalTime)}</div>
+                <div class="detail-box highlight">
+                    <div class="detail-item">
+                        <span class="detail-label">Course 1</span>
+                        <span class="detail-value">${formatTime(Math.floor(timer.stageTimes[0] / 1000))}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Tir 1</span>
+                        <span class="detail-value">${formatTime(Math.floor(timer.stageTimes[1] / 1000))}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Course 2</span>
+                        <span class="detail-value">${formatTime(Math.floor(timer.stageTimes[2] / 1000))}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Tir 2</span>
+                        <span class="detail-value">${formatTime(Math.floor(timer.stageTimes[3] / 1000))}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Course 3</span>
+                        <span class="detail-value">${formatTime(Math.floor(timer.stageTimes[4] / 1000))}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Tir 3</span>
+                        <span class="detail-value">${formatTime(Math.floor(timer.stageTimes[5] / 1000))}</span>
+                    </div>
+                </div>
+            `;
+            
+            showCustomModal(
+                `${timer.students[0]} + ${timer.students[1]} - ${timer.duoName}`,
+                content,
+                () => {},
+                'OK'
+            );
+        }
+
+        // Results
+        function renderResults() {
+            const container = document.getElementById('resultsTableContainer');
+            
+            const finishedTimers = appState.runningTimers.filter(t => t.finished);
+            
+            if (finishedTimers.length === 0) {
+                container.innerHTML = '<div class="no-timers">Aucun résultat à afficher</div>';
+                return;
+            }
+            
+            let html = '<table class="results-table">';
+            html += `
+                <thead>
+                    <tr>
+                        <th>Binôme</th>
+                        <th>DUO</th>
+                        <th>Temps Total</th>
+                        <th>Course 1</th>
+                        <th>Tir 1</th>
+                        <th>Course 2</th>
+                        <th>Tir 2</th>
+                        <th>Course 3</th>
+                        <th>Tir 3</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            finishedTimers.forEach(timer => {
+                const maxTime = parseTime(timer.duoConfig.times.maxTotal);
+                const isValid = maxTime === 0 || timer.totalTime <= maxTime;
+                const timeClass = isValid ? 'time-valid' : 'time-invalid';
+                
+                html += `
+                    <tr>
+                        <td>${timer.students[0]} + ${timer.students[1]}</td>
+                        <td>${timer.duoName}</td>
+                        <td class="${timeClass}">${formatTime(timer.totalTime)}</td>
+                        <td>${formatTime(Math.floor(timer.stageTimes[0] / 1000))}</td>
+                        <td>${formatTime(Math.floor(timer.stageTimes[1] / 1000))}</td>
+                        <td>${formatTime(Math.floor(timer.stageTimes[2] / 1000))}</td>
+                        <td>${formatTime(Math.floor(timer.stageTimes[3] / 1000))}</td>
+                        <td>${formatTime(Math.floor(timer.stageTimes[4] / 1000))}</td>
+                        <td>${formatTime(Math.floor(timer.stageTimes[5] / 1000))}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Excel Import/Export
+        function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length < 2) {
+                        alert('Le fichier Excel est vide ou invalide.');
+                        return;
+                    }
+                    
+                    // Clear existing data
+                    appState.students = [];
+                    appState.duoConfigs = [];
+                    
+                    // Parse data (skip header row)
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        
+                        // Student name (column 1)
+                        if (row[0] && String(row[0]).trim()) {
+                            const studentName = String(row[0]).trim();
+                            if (!appState.students.includes(studentName)) {
+                                appState.students.push(studentName);
+                            }
+                        }
+                        
+                        // DUO config (columns 2-9)
+                        if (row[1]) {
+                            const duoName = String(row[1]).trim();
+                            const duo = {
+                                id: Date.now() + i,
+                                name: duoName,
+                                times: {
+                                    course1: row[2] || '00:00:00',
+                                    tir1: row[3] || '00:00:00',
+                                    course2: row[4] || '00:00:00',
+                                    tir2: row[5] || '00:00:00',
+                                    course3: row[6] || '00:00:00',
+                                    tir3: row[7] || '00:00:00',
+                                    maxTotal: row[8] || '00:00:00'
+                                }
+                            };
+                            appState.duoConfigs.push(duo);
+                        }
+                    }
+                    
+                    // Update UI
+                    document.getElementById('studentsInput').value = appState.students.join('\n');
+                    renderDuoConfigs();
+                    saveToLocalStorage();
+                    
+                    alert(`Import réussi !\nÉlèves : ${appState.students.length}\nDUO : ${appState.duoConfigs.length}`);
+                } catch (error) {
+                    alert('Erreur lors de l\'import : ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        function exportToExcel() {
+            const finishedTimers = appState.runningTimers.filter(t => t.finished);
+            
+            if (finishedTimers.length === 0) {
+                alert('Aucun résultat à exporter.');
+                return;
+            }
+            
+            const data = [
+                ['Binôme', 'DUO', 'Temps Total', 'Course 1', 'Tir 1', 'Course 2', 'Tir 2', 'Course 3', 'Tir 3']
+            ];
+            
+            finishedTimers.forEach(timer => {
+                data.push([
+                    `${timer.students[0]} + ${timer.students[1]}`,
+                    timer.duoName,
+                    formatTime(timer.totalTime),
+                    formatTime(Math.floor(timer.stageTimes[0] / 1000)),
+                    formatTime(Math.floor(timer.stageTimes[1] / 1000)),
+                    formatTime(Math.floor(timer.stageTimes[2] / 1000)),
+                    formatTime(Math.floor(timer.stageTimes[3] / 1000)),
+                    formatTime(Math.floor(timer.stageTimes[4] / 1000)),
+                    formatTime(Math.floor(timer.stageTimes[5] / 1000))
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Résultats');
+            
+            const date = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `Laser_Run_Resultats_${date}.xlsx`);
+        }
+
+        // Modals
+        function showModal(title, message, onConfirm, onCancel, confirmText = 'Confirmer') {
+            const overlay = document.getElementById('modalOverlay');
+            overlay.innerHTML = `
+                <div class="modal-card">
+                    <div class="modal-title">${title}</div>
+                    <div class="modal-message">${message}</div>
+                    <div class="modal-actions">
+                        <button class="btn-blue" id="modalCancelBtn">Annuler</button>
+                        <button class="btn-red" id="modalConfirmBtn">${confirmText}</button>
+                    </div>
+                </div>
+            `;
+            overlay.classList.add('active');
+            
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                overlay.classList.remove('active');
+                if (onConfirm) onConfirm();
+            };
+            
+            document.getElementById('modalCancelBtn').onclick = () => {
+                overlay.classList.remove('active');
+                if (onCancel) onCancel();
+            };
+        }
+
+        function showCustomModal(title, content, onClose, closeText = 'OK') {
+            const overlay = document.getElementById('modalOverlay');
+            overlay.innerHTML = `
+                <div class="modal-card">
+                    <div class="modal-title">${title}</div>
+                    <div>${content}</div>
+                    <div class="modal-actions">
+                        <button class="btn-blue" id="modalCloseBtn">${closeText}</button>
+                    </div>
+                </div>
+            `;
+            overlay.classList.add('active');
+            
+            document.getElementById('modalCloseBtn').onclick = () => {
+                overlay.classList.remove('active');
+                if (onClose) onClose();
+            };
+        }
+
+        function showResetModal() {
+            showModal(
+                'Réinitialisation',
+                'Êtes-vous sûr de vouloir tout réinitialiser ? Toutes les données seront perdues.',
+                () => {
+                    // Clear all running timers
+                    appState.runningTimers.forEach(timer => {
+                        if (timer.interval) {
+                            clearInterval(timer.interval);
+                        }
+                    });
+                    
+                    appState = {
+                        students: [],
+                        duoConfigs: [],
+                        runningTimers: [],
+                        finishedTimers: [],
+                        selectedStudents: []
+                    };
+                    
+                    document.getElementById('studentsInput').value = '';
+                    saveToLocalStorage();
+                    renderDuoConfigs();
+                    showPage('configPage');
+                },
+                null,
+                'Confirmer'
+            );
+        }
+
+        function showEndSessionModal() {
+            showModal(
+                'Fin de la Séance',
+                'Êtes-vous sûr de vouloir terminer la séance ?',
+                () => {
+                    showPage('resultsPage');
+                },
+                null,
+                'Confirmer'
+            );
+        }
+
+        // LocalStorage
+        function saveToLocalStorage() {
+            const saveData = {
+                students: appState.students,
+                duoConfigs: appState.duoConfigs,
+                runningTimers: appState.runningTimers.map(timer => ({
+                    id: timer.id,
+                    students: timer.students,
+                    duoName: timer.duoName,
+                    duoConfig: timer.duoConfig,
+                    startTime: timer.startTime,
+                    currentStage: timer.currentStage,
+                    stageStartTime: timer.stageStartTime,
+                    stageTimes: timer.stageTimes,
+                    totalTime: timer.totalTime,
+                    finished: timer.finished
+                }))
+            };
+            localStorage.setItem('laserRunData', JSON.stringify(saveData));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('laserRunData');
+            if (!saved) return;
+            
+            try {
+                const data = JSON.parse(saved);
+                appState.students = data.students || [];
+                appState.duoConfigs = data.duoConfigs || [];
+                
+                // Restore timers
+                if (data.runningTimers) {
+                    data.runningTimers.forEach(timerData => {
+                        const timer = {
+                            ...timerData,
+                            interval: null
+                        };
+                        
+                        // Restart interval for active timers
+                        if (!timer.finished) {
+                            timer.interval = setInterval(() => updateTimerDisplay(timer), 100);
+                        }
+                        
+                        appState.runningTimers.push(timer);
+                    });
+                }
+                
+                // Update UI
+                if (appState.students.length > 0) {
+                    document.getElementById('studentsInput').value = appState.students.join('\n');
+                }
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+            }
+        }
+    </script>
+</body>
+</html>

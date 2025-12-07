@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Laser Run EPS</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Application de gestion de séances Laser Run pour l'EPS - Chronométrage et suivi des performances">
+    <meta name="theme-color" content="#764ba2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Laser Run EPS">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%23764ba2' rx='40'/><text x='50%' y='50%' font-size='100' text-anchor='middle' dominant-baseline='central'>⚡</text></svg>">
+    <link rel="apple-touch-icon" sizes="152x152" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 152 152'><rect width='152' height='152' fill='%23764ba2' rx='34'/><text x='50%' y='50%' font-size='84' text-anchor='middle' dominant-baseline='central'>⚡</text></svg>">
+    <link rel="apple-touch-icon" sizes="120x120" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' fill='%23764ba2' rx='26'/><text x='50%' y='50%' font-size='66' text-anchor='middle' dominant-baseline='central'>⚡</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23764ba2' rx='20'/><text x='50%' y='50%' font-size='60' text-anchor='middle' dominant-baseline='central'>⚡</text></svg>">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        body::before {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #667eea 0%, transparent 70%);
+            top: -300px;
+            left: -300px;
+        }
+
+        body::after {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #764ba2 0%, transparent 70%);
+            bottom: -250px;
+            right: -250px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, 50px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            animation: slideDown 0.5s ease;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Buttons */
+        button {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-violet {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .btn-orange {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        /* Input fields */
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* DUO Configuration */
+        .duo-config {
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .duo-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .duo-header input {
+            flex: 1;
+            margin-bottom: 0;
+            min-width: 200px;
+        }
+
+        .duo-header button {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .duo-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .duo-type-selector label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
+        .duo-type-selector input[type="radio"] {
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+        }
+
+        .stage-count-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .stage-count-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stage-count-field label {
+            font-weight: 600;
+            color: #4b5563;
+            font-size: 0.9rem;
+        }
+
+        .stage-count-field input {
+            width: 60px;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .duo-times {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .time-field label {
+            display: block;
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .time-field input {
+            margin-bottom: 0;
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        /* Students Grid */
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .student-btn {
+            padding: 20px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: #1f2937;
+            transition: all 0.3s ease;
+        }
+
+        .student-btn.selected {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Clock */
+        .clock {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: #667eea;
+            z-index: 100;
+        }
+
+        /* Timers Grid */
+        .timers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .timer-row {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border: 3px solid #667eea;
+        }
+
+        .compact-timer-btn {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            font-family: 'Outfit', sans-serif;
+            flex: 0 0 auto;
+            min-width: 140px;
+        }
+
+        .compact-timer-btn:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(0);
+        }
+
+        .timer-btn-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .students-names {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            line-height: 1.3;
+        }
+
+        .stage-info {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .timer-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .live-timer-display {
+            flex: 1;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 12px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #dee2e6;
+        }
+
+        .live-timer-label {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .live-timer-time {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #667eea;
+            letter-spacing: 2px;
+        }
+
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: scaleIn 0.3s ease;
+        }
+
+        .modal-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .modal-message {
+            font-size: 1.1rem;
+            color: #4b5563;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-actions button {
+            flex: 1;
+        }
+
+        /* Results Table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .time-valid {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .time-invalid {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .no-timers {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            font-size: 1.2rem;
+        }
+
+        .detail-box {
+            background: #f3f4f6;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .detail-box.highlight {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+            border: 2px solid #8b5cf6;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .detail-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            color: #1f2937;
+        }
+
+        .total-time-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #667eea;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .clock {
+                position: static;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+            .students-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .timers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-row {
+                flex-direction: column;
+            }
+
+            .compact-timer-btn {
+                padding: 10px 15px;
+                min-width: unset;
+                width: 100%;
+            }
+
+            .students-names {
+                font-size: 0.95rem;
+            }
+
+            .stage-info {
+                font-size: 0.8rem;
+            }
+
+            .timer-display {
+                font-size: 1.4rem;
+            }
+
+            .live-timer-time {
+                font-size: 2rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .actions button {
+                width: 100%;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .results-table {
+                font-size: 0.85rem;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 8px;
+            }
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ LASER RUN EPS</h1>
+
+        <!-- PAGE 1: CONFIGURATION -->
+        <div id="configPage" class="page active">
+            <div class="card">
+                <button class="btn-blue" onclick="handleConfigBack()" style="margin-bottom: 20px;">← Retour</button>
+                
+                <h2>⚙️ Configuration</h2>
+                
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #4b5563;">
+                    Liste des élèves (un par ligne, max 50) :
+                </label>
+                <textarea id="studentsInput" placeholder="Prénom Nom&#10;Prénom Nom&#10;..."></textarea>
+
+                <h2 style="margin-top: 30px;">🎯 Configuration des Epreuves</h2>
+                <div id="duoConfigsContainer"></div>
+                
+                <button class="btn-violet" onclick="addDuoConfig()">➕ Ajouter une Epreuve</button>
+
+                <div class="actions">
+                    <button class="btn-violet" onclick="document.getElementById('excelImport').click()">
+                        📥 Importer depuis Excel
+                    </button>
+                    <input type="file" id="excelImport" accept=".xls,.xlsx" onchange="importFromExcel(event)">
+                    
+                    <button class="btn-red" onclick="showResetModal()">🔄 Réinitialiser</button>
+                    <button class="btn-blue" onclick="startSession()">▶️ Démarrer la Séance</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: SELECTION DES ELEVES -->
+        <div id="selectStudentsPage" class="page">
+            <div id="clockDisplay" class="clock">00:00:00</div>
+            
+            <div class="card">
+                <div class="actions">
+                    <button class="btn-blue" onclick="showPage('mainPage')">← Retour</button>
+                    <button class="btn-blue" onclick="showPage('configPage')">⚙️ Configuration</button>
+                    <button class="btn-red" onclick="showEndSessionModal()">⏹ Fin de la Séance</button>
+                </div>
+
+                <h2 style="margin-top: 20px;">👥 Sélectionner les élèves</h2>
+                <div id="studentsGrid" class="students-grid"></div>
+                
+                <div class="actions" style="margin-top: 20px;">
+                    <button class="btn-violet" onclick="confirmStudentSelection()">🎯 Choisir une épreuve</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: SELECTION DU DUO -->
+        <div id="selectDuoPage" class="page">
+            <div class="card">
+                <button class="btn-blue" onclick="showPage('selectStudentsPage')">← Retour à la sélection des élèves</button>
+                
+                <h2 style="margin-top: 20px;">⚡ Sélectionner une Epreuve</h2>
+                <div id="duoSelectGrid" class="students-grid"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 4: BINOMES EN COURS -->
+        <div id="mainPage" class="page">
+            <div class="card">
+                <div class="actions">
+                    <button class="btn-blue" onclick="showPage('configPage')">← Retour Configuration</button>
+                    <button class="btn-blue" onclick="showPage('selectStudentsPage')">➕ Choisir d'autres élèves</button>
+                    <button class="btn-red" onclick="showEndSessionModal()">⏹ Fin de la Séance</button>
+                </div>
+
+                <h2 style="margin-top: 20px;">🏃 Binômes en cours</h2>
+                <div id="timersContainer"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 5: RESULTATS -->
+        <div id="resultsPage" class="page">
+            <div class="card">
+                <div class="actions">
+                    <button class="btn-blue" onclick="showPage('mainPage')">← Retour</button>
+                    <button class="btn-blue" onclick="showPage('configPage')">⚙️ Configuration</button>
+                    <button class="btn-green" onclick="exportToExcel()">📥 Exporter en Excel</button>
+                    <button class="btn-green" onclick="exportToPDF()">📄 Exporter en PDF</button>
+                </div>
+
+                <h2 style="margin-top: 20px;">📊 Résultats Finaux</h2>
+                <div id="resultsTableContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay"></div>
+
+    <script>
+        // État de l'application
+        let appState = {
+            students: [],
+            duoConfigs: [], // Conservé pour compatibilité du code
+            runningTimers: [],
+            finishedTimers: [],
+            selectedStudents: []
+        };
+
+        let isRecording = false;
+
+        // Stages names
+        const stageNames = ['Course 1', 'Tir 1', 'Course 2', 'Tir 2', 'Course 3', 'Tir 3'];
+
+        // Initialize
+        window.onload = function() {
+            loadFromLocalStorage();
+            renderDuoConfigs();
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Protection against closing
+            window.addEventListener('beforeunload', function(e) {
+                if (appState.runningTimers.length > 0) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+            
+            // PWA: Register Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register(createServiceWorkerBlob())
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            }
+            
+            // PWA: Create and inject manifest
+            const manifest = {
+                name: "Laser Run EPS",
+                short_name: "Laser Run",
+                description: "Application de gestion de séances Laser Run pour l'EPS",
+                start_url: window.location.pathname,
+                display: "standalone",
+                background_color: "#764ba2",
+                theme_color: "#764ba2",
+                orientation: "any",
+                icons: [
+                    {
+                        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23764ba2' rx='42'/><text x='50%' y='50%' font-size='106' text-anchor='middle' dominant-baseline='central'>⚡</text></svg>",
+                        sizes: "192x192",
+                        type: "image/svg+xml",
+                        purpose: "any maskable"
+                    },
+                    {
+                        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23764ba2' rx='112'/><text x='50%' y='50%' font-size='283' text-anchor='middle' dominant-baseline='central'>⚡</text></svg>",
+                        sizes: "512x512",
+                        type: "image/svg+xml",
+                        purpose: "any maskable"
+                    }
+                ]
+            };
+            
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = manifestURL;
+            document.head.appendChild(manifestLink);
+        };
+        
+        // Create Service Worker as a Blob
+        function createServiceWorkerBlob() {
+            const swCode = `
+                const CACHE_NAME = 'laser-run-eps-v1';
+                const urlsToCache = [
+                    '/',
+                    'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap',
+                    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js'
+                ];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                console.log('Cache opened');
+                                return cache.addAll(urlsToCache);
+                            })
+                            .catch(err => {
+                                console.log('Cache addAll error:', err);
+                            })
+                    );
+                    self.skipWaiting();
+                });
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => {
+                                if (response) {
+                                    return response;
+                                }
+                                return fetch(event.request)
+                                    .then(response => {
+                                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                                            return response;
+                                        }
+                                        const responseToCache = response.clone();
+                                        caches.open(CACHE_NAME)
+                                            .then(cache => {
+                                                cache.put(event.request, responseToCache);
+                                            });
+                                        return response;
+                                    })
+                                    .catch(() => {
+                                        return caches.match('/');
+                                    });
+                            })
+                    );
+                });
+
+                self.addEventListener('activate', event => {
+                    event.waitUntil(
+                        caches.keys().then(cacheNames => {
+                            return Promise.all(
+                                cacheNames.map(cacheName => {
+                                    if (cacheName !== CACHE_NAME) {
+                                        return caches.delete(cacheName);
+                                    }
+                                })
+                            );
+                        })
+                    );
+                    self.clients.claim();
+                });
+            `;
+            
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            return URL.createObjectURL(blob);
+        }
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const clockEl = document.getElementById('clockDisplay');
+            if (clockEl) {
+                clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // Page navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            if (pageId === 'mainPage') {
+                renderTimers();
+            } else if (pageId === 'selectStudentsPage') {
+                appState.selectedStudents = [];
+                renderStudentsGrid();
+            } else if (pageId === 'resultsPage') {
+                renderResults();
+            }
+        }
+
+        function handleConfigBack() {
+            // Si des timers sont en cours, retourner à la page principale
+            if (appState.runningTimers.length > 0) {
+                showPage('mainPage');
+            } else {
+                // Sinon, rester sur la configuration ou demander confirmation
+                showModal(
+                    'Quitter la configuration',
+                    'Aucune séance en cours. Souhaitez-vous démarrer une nouvelle séance ?',
+                    () => {
+                        startSession();
+                    },
+                    null,
+                    'Démarrer'
+                );
+            }
+        }
+
+        // Format time
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // Convert Excel decimal time to HH:MM:SS
+        function excelTimeToHHMMSS(excelTime) {
+            if (!excelTime) return '00:00:00';
+            
+            // If already in HH:MM:SS format, return as is
+            if (typeof excelTime === 'string' && excelTime.includes(':')) {
+                return excelTime;
+            }
+            
+            // Excel stores time as decimal (e.g., 0.5 = 12:00:00)
+            const totalSeconds = Math.round(excelTime * 24 * 3600);
+            return formatTime(totalSeconds);
+        }
+
+        // Parse time string to seconds
+        function parseTime(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            if (parts.length !== 3) return 0;
+            const h = parseInt(parts[0]) || 0;
+            const m = parseInt(parts[1]) || 0;
+            const s = parseInt(parts[2]) || 0;
+            return h * 3600 + m * 60 + s;
+        }
+
+        // Epreuve Configuration
+        function addDuoConfig() {
+            const newDuo = {
+                id: Date.now(),
+                name: `Epreuve ${appState.duoConfigs.length + 1}`,
+                type: 'DUO', // SOLO, DUO, ou TRIO
+                courseCount: 3,
+                tirCount: 3,
+                times: {
+                    course1: '00:00:00',
+                    tir1: '00:00:00',
+                    course2: '00:00:00',
+                    tir2: '00:00:00',
+                    course3: '00:00:00',
+                    tir3: '00:00:00',
+                    maxTotal: '00:00:00'
+                }
+            };
+            appState.duoConfigs.push(newDuo);
+            saveToLocalStorage();
+            renderDuoConfigs();
+        }
+
+        function removeDuoConfig(index) {
+            appState.duoConfigs.splice(index, 1);
+            saveToLocalStorage();
+            renderDuoConfigs();
+        }
+
+        function updateDuoName(index, name) {
+            appState.duoConfigs[index].name = name;
+            saveToLocalStorage();
+        }
+
+        function updateDuoType(index, type) {
+            appState.duoConfigs[index].type = type;
+            saveToLocalStorage();
+        }
+
+        function updateCourseCount(index, count) {
+            const num = parseInt(count) || 1;
+            appState.duoConfigs[index].courseCount = Math.max(1, Math.min(10, num));
+            saveToLocalStorage();
+            renderDuoConfigs();
+        }
+
+        function updateTirCount(index, count) {
+            const num = parseInt(count) || 1;
+            appState.duoConfigs[index].tirCount = Math.max(1, Math.min(10, num));
+            saveToLocalStorage();
+            renderDuoConfigs();
+        }
+
+        function updateDuoTime(index, field, value) {
+            appState.duoConfigs[index].times[field] = value;
+            saveToLocalStorage();
+        }
+
+        function renderDuoConfigs() {
+            const container = document.getElementById('duoConfigsContainer');
+            container.innerHTML = '';
+            
+            appState.duoConfigs.forEach((duo, index) => {
+                // Ensure defaults
+                if (!duo.type) duo.type = 'DUO';
+                if (!duo.courseCount) duo.courseCount = 3;
+                if (!duo.tirCount) duo.tirCount = 3;
+                
+                const duoDiv = document.createElement('div');
+                duoDiv.className = 'duo-config';
+                
+                let html = `
+                    <div class="duo-header">
+                        <input type="text" value="${duo.name}" 
+                               onchange="updateDuoName(${index}, this.value)"
+                               placeholder="Nom de l'Epreuve">
+                        <button class="btn-red" onclick="removeDuoConfig(${index})">🗑 Supprimer</button>
+                    </div>
+                    <div class="duo-type-selector">
+                        <span style="font-weight: 600; color: #4b5563;">Type d'épreuve :</span>
+                        <label>
+                            <input type="radio" name="type_${index}" value="SOLO" 
+                                   ${duo.type === 'SOLO' ? 'checked' : ''}
+                                   onchange="updateDuoType(${index}, 'SOLO')">
+                            SOLO (1 élève)
+                        </label>
+                        <label>
+                            <input type="radio" name="type_${index}" value="DUO" 
+                                   ${duo.type === 'DUO' ? 'checked' : ''}
+                                   onchange="updateDuoType(${index}, 'DUO')">
+                            DUO (2 élèves)
+                        </label>
+                        <label>
+                            <input type="radio" name="type_${index}" value="TRIO" 
+                                   ${duo.type === 'TRIO' ? 'checked' : ''}
+                                   onchange="updateDuoType(${index}, 'TRIO')">
+                            TRIO (3 élèves)
+                        </label>
+                    </div>
+                    <div class="stage-count-selector">
+                        <div class="stage-count-field">
+                            <label>Nombre de courses :</label>
+                            <input type="number" min="1" max="10" value="${duo.courseCount}" 
+                                   onchange="updateCourseCount(${index}, this.value)">
+                        </div>
+                        <div class="stage-count-field">
+                            <label>Nombre de tirs :</label>
+                            <input type="number" min="1" max="10" value="${duo.tirCount}" 
+                                   onchange="updateTirCount(${index}, this.value)">
+                        </div>
+                    </div>
+                    <div class="duo-times">
+                `;
+                
+                // Generate dynamic time fields based on courseCount and tirCount
+                const totalStages = duo.courseCount + duo.tirCount;
+                let stageIndex = 0;
+                
+                for (let c = 1; c <= duo.courseCount; c++) {
+                    const fieldName = `course${c}`;
+                    if (!duo.times[fieldName]) duo.times[fieldName] = '00:00:00';
+                    html += `
+                        <div class="time-field">
+                            <label>Course ${c}</label>
+                            <input type="text" value="${duo.times[fieldName]}" 
+                                   onchange="updateDuoTime(${index}, '${fieldName}', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                    `;
+                }
+                
+                for (let t = 1; t <= duo.tirCount; t++) {
+                    const fieldName = `tir${t}`;
+                    if (!duo.times[fieldName]) duo.times[fieldName] = '00:00:00';
+                    html += `
+                        <div class="time-field">
+                            <label>Tir ${t}</label>
+                            <input type="text" value="${duo.times[fieldName]}" 
+                                   onchange="updateDuoTime(${index}, '${fieldName}', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                    `;
+                }
+                
+                html += `
+                        <div class="time-field">
+                            <label>Temps Maximum total</label>
+                            <input type="text" value="${duo.times.maxTotal}" 
+                                   onchange="updateDuoTime(${index}, 'maxTotal', this.value)"
+                                   placeholder="HH:MM:SS">
+                        </div>
+                    </div>
+                `;
+                
+                duoDiv.innerHTML = html;
+                container.appendChild(duoDiv);
+            });
+        }
+
+        // Start session
+        function startSession() {
+            // Get students
+            const studentsText = document.getElementById('studentsInput').value.trim();
+            if (!studentsText) {
+                alert('Veuillez saisir au moins un élève.');
+                return;
+            }
+            
+            appState.students = studentsText.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0)
+                .slice(0, 50);
+            
+            if (appState.students.length === 0) {
+                alert('Veuillez saisir au moins un élève valide.');
+                return;
+            }
+
+            // Reset running timers
+            appState.runningTimers.forEach(timer => {
+                if (timer.interval) {
+                    clearInterval(timer.interval);
+                }
+            });
+            appState.runningTimers = [];
+            appState.finishedTimers = [];
+            
+            saveToLocalStorage();
+            showPage('selectStudentsPage');
+        }
+
+        // Students selection
+        function renderStudentsGrid() {
+            const grid = document.getElementById('studentsGrid');
+            grid.innerHTML = '';
+            
+            appState.students.forEach(student => {
+                const btn = document.createElement('button');
+                btn.className = 'student-btn';
+                btn.textContent = student;
+                
+                if (appState.selectedStudents.includes(student)) {
+                    btn.classList.add('selected');
+                }
+                
+                btn.onclick = () => toggleStudentSelection(student);
+                grid.appendChild(btn);
+            });
+        }
+
+        function toggleStudentSelection(student) {
+            const index = appState.selectedStudents.indexOf(student);
+            
+            if (index > -1) {
+                appState.selectedStudents.splice(index, 1);
+            } else {
+                // Limit to 3 students maximum (for TRIO)
+                if (appState.selectedStudents.length >= 3) {
+                    return;
+                }
+                appState.selectedStudents.push(student);
+            }
+            
+            renderStudentsGrid();
+        }
+
+        function confirmStudentSelection() {
+            if (appState.selectedStudents.length === 0) {
+                alert('Veuillez sélectionner au moins un élève.');
+                return;
+            }
+            
+            const studentsText = appState.selectedStudents.join(' + ');
+            const studentWord = appState.selectedStudents.length === 1 ? 'élève sélectionné' : 'élèves sélectionnés';
+            
+            showModal(
+                studentsText,
+                `${appState.selectedStudents.length} ${studentWord}. Êtes-vous sûr ?`,
+                () => {
+                    showDuoSelection();
+                },
+                () => {
+                    appState.selectedStudents = [];
+                    renderStudentsGrid();
+                },
+                'Confirmer'
+            );
+        }
+
+        // Epreuve selection
+        function showDuoSelection() {
+            if (appState.duoConfigs.length === 0) {
+                alert('Veuillez configurer au moins une Epreuve.');
+                appState.selectedStudents = [];
+                showPage('configPage');
+                return;
+            }
+            
+            const selectedCount = appState.selectedStudents.length;
+            const requiredType = selectedCount === 1 ? 'SOLO' : selectedCount === 2 ? 'DUO' : 'TRIO';
+            
+            // Filter epreuves by type
+            const compatibleEpreuves = appState.duoConfigs.filter(duo => {
+                if (!duo.type) duo.type = 'DUO'; // Default for old configs
+                return duo.type === requiredType;
+            });
+            
+            if (compatibleEpreuves.length === 0) {
+                alert(`Aucune épreuve de type ${requiredType} configurée. Veuillez ajouter une épreuve ${requiredType} dans la configuration.`);
+                appState.selectedStudents = [];
+                showPage('configPage');
+                return;
+            }
+            
+            const grid = document.getElementById('duoSelectGrid');
+            grid.innerHTML = '';
+            
+            compatibleEpreuves.forEach((duo) => {
+                const btn = document.createElement('button');
+                btn.className = 'student-btn btn-violet';
+                btn.textContent = duo.name;
+                btn.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+                btn.style.color = 'white';
+                
+                btn.onclick = () => {
+                    showModal(
+                        duo.name,
+                        'Êtes-vous sûr ? PRÊT',
+                        () => {
+                            startTimer(duo);
+                        },
+                        null,
+                        'Confirmer'
+                    );
+                };
+                
+                grid.appendChild(btn);
+            });
+            
+            showPage('selectDuoPage');
+        }
+
+        // Timer functions
+        function startTimer(duo) {
+            // Ensure defaults
+            if (!duo.type) duo.type = 'DUO';
+            if (!duo.courseCount) duo.courseCount = 3;
+            if (!duo.tirCount) duo.tirCount = 3;
+            
+            // Build stage names dynamically - alternate between course and tir
+            const stageNames = [];
+            const maxStages = Math.max(duo.courseCount, duo.tirCount);
+            
+            for (let i = 0; i < maxStages; i++) {
+                if (i < duo.courseCount) {
+                    stageNames.push(`Course ${i + 1}`);
+                }
+                if (i < duo.tirCount) {
+                    stageNames.push(`Tir ${i + 1}`);
+                }
+            }
+            
+            const timer = {
+                id: Date.now(),
+                students: [...appState.selectedStudents],
+                duoName: duo.name,
+                duoConfig: {...duo},
+                stageNames: stageNames,
+                totalStages: stageNames.length,
+                startTime: Date.now(),
+                currentStage: 0,
+                stageStartTime: Date.now(),
+                stageTimes: [],
+                totalTime: 0,
+                finished: false,
+                interval: null
+            };
+            
+            timer.interval = setInterval(() => updateTimerDisplay(timer), 100);
+            
+            appState.runningTimers.push(timer);
+            appState.selectedStudents = [];
+            
+            saveToLocalStorage();
+            showPage('mainPage');
+            renderTimers();
+        }
+
+        function updateTimerDisplay(timer) {
+            if (timer.finished) return;
+            
+            timer.totalTime = Math.floor((Date.now() - timer.startTime) / 1000);
+            saveToLocalStorage();
+            
+            // Update live timer display
+            updateLiveTimerDisplay(timer);
+        }
+
+        function updateLiveTimerDisplay(timer) {
+            const liveTimerEl = document.getElementById(`liveTimer${timer.id}`);
+            if (liveTimerEl && !timer.finished) {
+                const currentTotalTime = Math.floor((Date.now() - timer.startTime) / 1000);
+                liveTimerEl.textContent = formatTime(currentTotalTime);
+            }
+        }
+
+        function renderTimers() {
+            const container = document.getElementById('timersContainer');
+            
+            const activeTimers = appState.runningTimers.filter(t => !t.finished);
+            const finishedTimers = appState.runningTimers.filter(t => t.finished);
+            
+            if (activeTimers.length === 0 && finishedTimers.length === 0) {
+                container.innerHTML = '<div class="no-timers">Aucun binôme en cours</div>';
+                return;
+            }
+            
+            let html = '<div class="timers-grid">';
+            
+            activeTimers.forEach((timer) => {
+                const index = appState.runningTimers.indexOf(timer);
+                const stageName = timer.stageNames ? timer.stageNames[timer.currentStage] : stageNames[timer.currentStage];
+                const studentsText = timer.students.join(' + ');
+                
+                html += `
+                    <div class="timer-row">
+                        <button class="compact-timer-btn btn-orange" onclick="recordStage(${index})">
+                            <div class="timer-btn-content">
+                                <div class="students-names">${studentsText}</div>
+                                <div class="stage-info">${stageName}</div>
+                            </div>
+                            <div class="timer-display">▶</div>
+                        </button>
+                        <div class="live-timer-display">
+                            <div class="live-timer-label">${studentsText}</div>
+                            <div class="live-timer-time" id="liveTimer${timer.id}">00:00:00</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            if (finishedTimers.length > 0) {
+                html += '<div class="section-title">✅ Binômes terminés</div>';
+                html += '<div class="timers-grid">';
+                
+                finishedTimers.forEach((timer) => {
+                    const index = appState.runningTimers.indexOf(timer);
+                    const studentsText = timer.students.join(' + ');
+                    
+                    html += `
+                        <div class="timer-row">
+                            <button class="compact-timer-btn btn-green" onclick="showTimerDetails(${index})" style="flex: 1;">
+                                <div class="timer-btn-content">
+                                    <div class="students-names">${studentsText}</div>
+                                    <div class="stage-info">TERMINÉ ✓</div>
+                                </div>
+                                <div class="timer-display">${formatTime(timer.totalTime)}</div>
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+            
+            // Update live timers
+            activeTimers.forEach(timer => {
+                updateLiveTimerDisplay(timer);
+            });
+        }
+
+        function recordStage(timerIndex) {
+            if (isRecording) return;
+            isRecording = true;
+            
+            const timer = appState.runningTimers[timerIndex];
+            if (!timer || timer.finished) {
+                isRecording = false;
+                return;
+            }
+            
+            // Record current stage time
+            const stageTime = Date.now() - timer.stageStartTime;
+            timer.stageTimes.push(stageTime);
+            
+            // Move to next stage
+            timer.currentStage++;
+            
+            const totalStages = timer.totalStages || timer.stageNames.length;
+            
+            if (timer.currentStage >= totalStages) {
+                // Finished
+                timer.finished = true;
+                timer.totalTime = Math.floor((Date.now() - timer.startTime) / 1000);
+                if (timer.interval) {
+                    clearInterval(timer.interval);
+                    timer.interval = null;
+                }
+            } else {
+                // Start next stage
+                timer.stageStartTime = Date.now();
+            }
+            
+            saveToLocalStorage();
+            renderTimers();
+            
+            setTimeout(() => {
+                isRecording = false;
+            }, 300);
+        }
+
+        function showTimerDetails(timerIndex) {
+            const timer = appState.runningTimers[timerIndex];
+            if (!timer) return;
+            
+            const studentsText = timer.students.join(' + ');
+            const stageNames = timer.stageNames || ['Course 1', 'Tir 1', 'Course 2', 'Tir 2', 'Course 3', 'Tir 3'];
+            
+            let content = `
+                <div class="total-time-display">${formatTime(timer.totalTime)}</div>
+                <div class="detail-box highlight">
+            `;
+            
+            timer.stageTimes.forEach((time, index) => {
+                content += `
+                    <div class="detail-item">
+                        <span class="detail-label">${stageNames[index]}</span>
+                        <span class="detail-value">${formatTime(Math.floor(time / 1000))}</span>
+                    </div>
+                `;
+            });
+            
+            content += `</div>`;
+            
+            showCustomModal(
+                `${studentsText} - ${timer.duoName}`,
+                content,
+                () => {},
+                'OK'
+            );
+        }
+
+        // Results
+        function renderResults() {
+            const container = document.getElementById('resultsTableContainer');
+            
+            const finishedTimers = appState.runningTimers.filter(t => t.finished);
+            
+            if (finishedTimers.length === 0) {
+                container.innerHTML = '<div class="no-timers">Aucun résultat à afficher</div>';
+                return;
+            }
+            
+            // Determine max number of stages for table columns
+            let maxStages = 0;
+            let allStageNames = [];
+            
+            finishedTimers.forEach(timer => {
+                // Ensure stageNames exists
+                if (!timer.stageNames) {
+                    timer.stageNames = ['Course 1', 'Tir 1', 'Course 2', 'Tir 2', 'Course 3', 'Tir 3'];
+                }
+                
+                const stageCount = timer.stageTimes ? timer.stageTimes.length : 0;
+                if (stageCount > maxStages) {
+                    maxStages = stageCount;
+                    allStageNames = timer.stageNames.slice(0, stageCount);
+                }
+            });
+            
+            let html = '<table class="results-table">';
+            html += `<thead><tr><th>Binôme</th><th>Epreuve</th><th>Temps Total</th>`;
+            
+            // Add columns for each stage
+            for (let i = 0; i < maxStages; i++) {
+                const stageName = allStageNames[i] || `Étape ${i + 1}`;
+                html += `<th>${stageName}</th>`;
+            }
+            
+            html += `</tr></thead><tbody>`;
+            
+            finishedTimers.forEach(timer => {
+                const maxTime = timer.duoConfig && timer.duoConfig.times ? parseTime(timer.duoConfig.times.maxTotal) : 0;
+                const isValid = maxTime === 0 || timer.totalTime <= maxTime;
+                const timeClass = isValid ? 'time-valid' : 'time-invalid';
+                const studentsText = timer.students.join(' + ');
+                
+                html += `<tr>
+                    <td>${studentsText}</td>
+                    <td>${timer.duoName || 'N/A'}</td>
+                    <td class="${timeClass}">${formatTime(timer.totalTime)}</td>`;
+                
+                // Add time for each stage
+                for (let i = 0; i < maxStages; i++) {
+                    if (timer.stageTimes && i < timer.stageTimes.length) {
+                        html += `<td>${formatTime(Math.floor(timer.stageTimes[i] / 1000))}</td>`;
+                    } else {
+                        html += `<td>-</td>`;
+                    }
+                }
+                
+                html += `</tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Excel Import/Export
+        function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length < 2) {
+                        alert('Le fichier Excel est vide ou invalide.');
+                        return;
+                    }
+                    
+                    // Clear existing data
+                    appState.students = [];
+                    appState.duoConfigs = [];
+                    
+                    // Parse data (skip header row)
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        
+                        // Column A (index 0): Student name (optional)
+                        if (row[0] && String(row[0]).trim()) {
+                            const studentName = String(row[0]).trim();
+                            if (!appState.students.includes(studentName)) {
+                                appState.students.push(studentName);
+                            }
+                        }
+                        
+                        // Column B (index 1): Type (SOLO/DUO/TRIO)
+                        // Column C (index 2): Epreuve name
+                        if (row[2] && String(row[2]).trim()) {
+                            const type = row[1] ? String(row[1]).trim().toUpperCase() : 'DUO';
+                            const epreuveName = String(row[2]).trim();
+                            const maxTotal = excelTimeToHHMMSS(row[3]); // Column D (index 3): Temps Max
+                            const courseCount = parseInt(row[4]) || 3; // Column E (index 4): Nb courses
+                            const tirCount = parseInt(row[5]) || 3; // Column F (index 5): Nb tirs
+                            
+                            // Validate type
+                            const validType = ['SOLO', 'DUO', 'TRIO'].includes(type) ? type : 'DUO';
+                            
+                            // Build times object from columns G to P (indices 6 to 15)
+                            const times = {
+                                maxTotal: maxTotal
+                            };
+                            
+                            // Read stage times alternating course/tir
+                            let colIndex = 6; // Start at column G
+                            const maxStages = Math.max(courseCount, tirCount);
+                            
+                            for (let s = 0; s < maxStages; s++) {
+                                if (s < courseCount) {
+                                    const courseKey = `course${s + 1}`;
+                                    times[courseKey] = excelTimeToHHMMSS(row[colIndex]);
+                                    colIndex++;
+                                }
+                                if (s < tirCount) {
+                                    const tirKey = `tir${s + 1}`;
+                                    times[tirKey] = excelTimeToHHMMSS(row[colIndex]);
+                                    colIndex++;
+                                }
+                            }
+                            
+                            const epreuve = {
+                                id: Date.now() + i,
+                                name: epreuveName,
+                                type: validType,
+                                courseCount: courseCount,
+                                tirCount: tirCount,
+                                times: times
+                            };
+                            
+                            appState.duoConfigs.push(epreuve);
+                        }
+                    }
+                    
+                    // Update UI
+                    document.getElementById('studentsInput').value = appState.students.join('\n');
+                    renderDuoConfigs();
+                    saveToLocalStorage();
+                    
+                    alert(`Import réussi !\nÉlèves : ${appState.students.length}\nEpreuves : ${appState.duoConfigs.length}`);
+                } catch (error) {
+                    alert('Erreur lors de l\'import : ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        function exportToExcel() {
+            const finishedTimers = appState.runningTimers.filter(t => t.finished);
+            
+            if (finishedTimers.length === 0) {
+                alert('Aucun résultat à exporter.');
+                return;
+            }
+            
+            // Determine max number of stages
+            let maxStages = 0;
+            let allStageNames = [];
+            
+            finishedTimers.forEach(timer => {
+                if (timer.stageTimes.length > maxStages) {
+                    maxStages = timer.stageTimes.length;
+                    allStageNames = timer.stageNames || [];
+                }
+            });
+            
+            // Build header
+            const header = ['Binôme', 'Epreuve', 'Temps Total'];
+            for (let i = 0; i < maxStages; i++) {
+                const stageName = allStageNames[i] || `Étape ${i + 1}`;
+                header.push(stageName);
+            }
+            
+            const data = [header];
+            
+            finishedTimers.forEach(timer => {
+                const studentsText = timer.students.join(' + ');
+                const row = [
+                    studentsText,
+                    timer.duoName,
+                    formatTime(timer.totalTime)
+                ];
+                
+                for (let i = 0; i < maxStages; i++) {
+                    if (i < timer.stageTimes.length) {
+                        row.push(formatTime(Math.floor(timer.stageTimes[i] / 1000)));
+                    } else {
+                        row.push('-');
+                    }
+                }
+                
+                data.push(row);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Résultats');
+            
+            const date = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `Laser_Run_Resultats_${date}.xlsx`);
+        }
+
+        function exportToPDF() {
+            const finishedTimers = appState.runningTimers.filter(t => t.finished);
+            
+            if (finishedTimers.length === 0) {
+                alert('Aucun résultat à exporter.');
+                return;
+            }
+            
+            // Determine max number of stages
+            let maxStages = 0;
+            let allStageNames = [];
+            
+            finishedTimers.forEach(timer => {
+                if (timer.stageTimes.length > maxStages) {
+                    maxStages = timer.stageTimes.length;
+                    allStageNames = timer.stageNames || [];
+                }
+            });
+            
+            // Build header
+            const header = ['Binôme', 'Epreuve', 'Temps Total'];
+            for (let i = 0; i < maxStages; i++) {
+                const stageName = allStageNames[i] || `Étape ${i + 1}`;
+                header.push(stageName);
+            }
+            
+            // Build data rows
+            const rows = [];
+            finishedTimers.forEach(timer => {
+                const studentsText = timer.students.join(' + ');
+                const row = [
+                    studentsText,
+                    timer.duoName,
+                    formatTime(timer.totalTime)
+                ];
+                
+                for (let i = 0; i < maxStages; i++) {
+                    if (i < timer.stageTimes.length) {
+                        row.push(formatTime(Math.floor(timer.stageTimes[i] / 1000)));
+                    } else {
+                        row.push('-');
+                    }
+                }
+                
+                rows.push(row);
+            });
+            
+            // Create PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: maxStages > 4 ? 'landscape' : 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Title
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('⚡ LASER RUN EPS - Résultats Finaux', 14, 15);
+            
+            // Date
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            const dateStr = new Date().toLocaleDateString('fr-FR');
+            doc.text(`Date : ${dateStr}`, 14, 22);
+            
+            // Table
+            doc.autoTable({
+                head: [header],
+                body: rows,
+                startY: 28,
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 3,
+                    overflow: 'linebreak',
+                    font: 'helvetica'
+                },
+                headStyles: {
+                    fillColor: [102, 126, 234],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                bodyStyles: {
+                    halign: 'center'
+                },
+                columnStyles: {
+                    0: { halign: 'left' },
+                    1: { halign: 'left' }
+                },
+                alternateRowStyles: {
+                    fillColor: [245, 245, 245]
+                },
+                margin: { top: 28 }
+            });
+            
+            // Save
+            const date = new Date().toISOString().split('T')[0];
+            doc.save(`Laser_Run_Resultats_${date}.pdf`);
+        }
+
+        // Modals
+        function showModal(title, message, onConfirm, onCancel, confirmText = 'Confirmer') {
+            const overlay = document.getElementById('modalOverlay');
+            overlay.innerHTML = `
+                <div class="modal-card">
+                    <div class="modal-title">${title}</div>
+                    <div class="modal-message">${message}</div>
+                    <div class="modal-actions">
+                        <button class="btn-blue" id="modalCancelBtn">Annuler</button>
+                        <button class="btn-red" id="modalConfirmBtn">${confirmText}</button>
+                    </div>
+                </div>
+            `;
+            overlay.classList.add('active');
+            
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                overlay.classList.remove('active');
+                if (onConfirm) onConfirm();
+            };
+            
+            document.getElementById('modalCancelBtn').onclick = () => {
+                overlay.classList.remove('active');
+                if (onCancel) onCancel();
+            };
+        }
+
+        function showCustomModal(title, content, onClose, closeText = 'OK') {
+            const overlay = document.getElementById('modalOverlay');
+            overlay.innerHTML = `
+                <div class="modal-card">
+                    <div class="modal-title">${title}</div>
+                    <div>${content}</div>
+                    <div class="modal-actions">
+                        <button class="btn-blue" id="modalCloseBtn">${closeText}</button>
+                    </div>
+                </div>
+            `;
+            overlay.classList.add('active');
+            
+            document.getElementById('modalCloseBtn').onclick = () => {
+                overlay.classList.remove('active');
+                if (onClose) onClose();
+            };
+        }
+
+        function showResetModal() {
+            showModal(
+                'Réinitialisation',
+                'Êtes-vous sûr de vouloir tout réinitialiser ? Toutes les données seront perdues.',
+                () => {
+                    // Clear all running timers
+                    appState.runningTimers.forEach(timer => {
+                        if (timer.interval) {
+                            clearInterval(timer.interval);
+                        }
+                    });
+                    
+                    appState = {
+                        students: [],
+                        duoConfigs: [],
+                        runningTimers: [],
+                        finishedTimers: [],
+                        selectedStudents: []
+                    };
+                    
+                    document.getElementById('studentsInput').value = '';
+                    saveToLocalStorage();
+                    renderDuoConfigs();
+                    showPage('configPage');
+                },
+                null,
+                'Confirmer'
+            );
+        }
+
+        function showEndSessionModal() {
+            showModal(
+                'Fin de la Séance',
+                'Êtes-vous sûr de vouloir terminer la séance ?',
+                () => {
+                    showPage('resultsPage');
+                },
+                null,
+                'Confirmer'
+            );
+        }
+
+        // LocalStorage
+        function saveToLocalStorage() {
+            const saveData = {
+                students: appState.students,
+                duoConfigs: appState.duoConfigs,
+                runningTimers: appState.runningTimers.map(timer => ({
+                    id: timer.id,
+                    students: timer.students,
+                    duoName: timer.duoName,
+                    duoConfig: timer.duoConfig,
+                    startTime: timer.startTime,
+                    currentStage: timer.currentStage,
+                    stageStartTime: timer.stageStartTime,
+                    stageTimes: timer.stageTimes,
+                    totalTime: timer.totalTime,
+                    finished: timer.finished
+                }))
+            };
+            localStorage.setItem('laserRunData', JSON.stringify(saveData));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('laserRunData');
+            if (!saved) return;
+            
+            try {
+                const data = JSON.parse(saved);
+                appState.students = data.students || [];
+                appState.duoConfigs = data.duoConfigs || [];
+                
+                // Restore timers
+                if (data.runningTimers) {
+                    data.runningTimers.forEach(timerData => {
+                        // Ensure defaults for old configs
+                        if (!timerData.stageNames) {
+                            timerData.stageNames = ['Course 1', 'Tir 1', 'Course 2', 'Tir 2', 'Course 3', 'Tir 3'];
+                        }
+                        if (!timerData.totalStages) {
+                            timerData.totalStages = timerData.stageNames.length;
+                        }
+                        
+                        const timer = {
+                            ...timerData,
+                            interval: null
+                        };
+                        
+                        // Restart interval for active timers
+                        if (!timer.finished) {
+                            timer.interval = setInterval(() => updateTimerDisplay(timer), 100);
+                        }
+                        
+                        appState.runningTimers.push(timer);
+                    });
+                }
+                
+                // Update UI
+                if (appState.students.length > 0) {
+                    document.getElementById('studentsInput').value = appState.students.join('\n');
+                }
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+            }
+        }
+    </script>
+</body>
+</html>
